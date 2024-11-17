@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solaranlage Sava</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    #messages {
+      border: 1px solid #ccc;
+      padding: 10px;
+      max-width: 600px;
+      margin-top: 20px;
+      background-color: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+  <h1>Solaranlage Sava</h1>
+ <table>
+    <tr>
+      <td>Zeitstempel</td>
+      <td><div id="timestamp"></div></td>
+    </tr>
+    <tr>
+      <td>Total Gesamt</td>
+      <td><span id="topic1"></span> kwh</td>
+    </tr>
+    <tr>
+      <td>Total Tag</td>
+      <td><span id="topic2"></span> Wh</td>
+    </tr>
+	  <td>Aktuell</td>
+      <td><span id="topic3"></span> W</td>
+    </tr>
+  </table>
+<style>
+    table {
+      width: 50%;
+      border-collapse: collapse;
+      margin: 20px 0;
+      font-size: 18px;
+      text-align: left;
+    }
+    th, td {
+      border: 1px solid #dddddd;
+      padding: 8px;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    td:nth-child(2), th:nth-child(2) {
+      text-align: right; /* Right-align only the second column */
+    }
+  </style>
+  <p>Status: <span id="status">Disconnected</span></p>
+  <p>Received Messages: <span id="receivedMsgs">0</div></p>
+ 
+  <script>
+    let receivedMsgs = 0;
+  
+    // MQTT Broker details
+    const broker = 'wss://e23fa99e4f934d279e11c7bc9520578e.s1.eu.hivemq.cloud:8884/mqtt'; // Public HiveMQ broker
+    const topic = ['solar/ac/yieldtotal','solar/116484675526/0/yieldday','solar/116484675526/0/power']; // Replace with your topic(s)
+    const username = 'openDTU'; // Replace with your username
+    const password = 'openDTU42'; // Replace with your password
+
+
+    // Update status
+    const statusEl = document.getElementById('status');
+    const receivedMsgsEl = document.getElementById('receivedMsgs');
+    const messagesEl = document.getElementById('messages');
+	
+	// Map of topic to HTML element IDs
+    const topicMap = {
+      'timestamp': 'timestamp',
+      'solar/ac/yieldtotal': 'topic1',
+      'solar/116484675526/0/yieldday': 'topic2',
+      'solar/116484675526/0/power': 'topic3',
+    };
+
+    // Connect to the broker
+    const client = mqtt.connect(broker, {username: username,password: password,});
+
+    // Handle connection success
+    client.on('connect', () => {
+      console.log('Connected to MQTT broker');
+      statusEl.textContent = 'Connected';
+      client.subscribe(topic, (err) => {
+        if (!err) {
+          console.log(`Subscribed to topic: ${topic}`);
+        } else {
+          console.error('Subscription error:', err);
+        }
+      });
+    });
+
+    // Handle incoming messages
+    client.on('message', (topic, message) => {
+      const msg = `${message.toString()}`;
+      console.log(`Topic: ${topic}, ${msg}`);
+
+      //receivedMsgs
+	  receivedMsgs = receivedMsgs + 1;
+	  receivedMsgsEl.textContent = receivedMsgs.toString();
+	  
+	  // Timestamp: ${timestamp} 
+	  const timestamp = new Date().toLocaleString();
+      const targetEl = document.getElementById('timestamp');
+	  targetEl.textContent = timestamp;
+	  
+      // Find the corresponding HTML element
+      const targetId = topicMap[topic];
+      if (targetId) {
+        const targetEl = document.getElementById(targetId);
+        if (targetEl) {
+          // Replace content with the new message
+          targetEl.textContent = msg;
+        }
+      } else {
+        console.warn('No HTML element mapped for topic:', topic);
+      }
+    });
+
+    // Handle connection errors
+    client.on('error', (err) => {
+      console.error('Connection error:', err);
+      statusEl.textContent = 'Connection Error';
+    });
+
+    // Handle disconnection
+    client.on('close', () => {
+      console.log('Disconnected from broker');
+      statusEl.textContent = 'Disconnected';
+    });
+  </script>
+</body>
+</html>
