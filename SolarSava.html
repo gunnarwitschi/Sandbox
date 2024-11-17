@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solaranlage Sava</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    #messages {
+      border: 1px solid #ccc;
+      padding: 10px;
+      max-width: 600px;
+      margin-top: 20px;
+      background-color: #f9f9f9;
+    }
+  </style>
+</head>
+<body>
+  <h1>Solaranlage Sava</h1>
+  <p>Status: <span id="status">Disconnected</span></p>
+  <p>Received Messages:</p>
+  <div id="messages">No messages yet.</div>
+
+  <script>
+    // MQTT Broker details
+    const broker = 'wss://e23fa99e4f934d279e11c7bc9520578e.s1.eu.hivemq.cloud:8884/mqtt'; // Public HiveMQ broker
+    const topic = ['solar/116484675526/0/power','solar/116484675526/0/yieldday']; // Replace with your topic(s)
+    const username = 'openDTU'; // Replace with your username
+    const password = 'openDTU42'; // Replace with your password
+
+
+    // Update status
+    const statusEl = document.getElementById('status');
+    const messagesEl = document.getElementById('messages');
+
+    // Connect to the broker
+    const client = mqtt.connect(broker, {username: username,password: password,});
+
+    // Handle connection success
+    client.on('connect', () => {
+      console.log('Connected to MQTT broker');
+      statusEl.textContent = 'Connected';
+      client.subscribe(topic, (err) => {
+        if (!err) {
+          console.log(`Subscribed to topic: ${topic}`);
+        } else {
+          console.error('Subscription error:', err);
+        }
+      });
+    });
+
+    // Handle incoming messages
+    client.on('message', (topic, message) => {
+      console.log(`Message received on topic ${topic}: ${message.toString()}`);
+      const newMessage = document.createElement('p');
+      newMessage.textContent = `Topic: ${topic} | Message: ${message.toString()}`;
+      messagesEl.appendChild(newMessage);
+    });
+
+    // Handle connection errors
+    client.on('error', (err) => {
+      console.error('Connection error:', err);
+      statusEl.textContent = 'Connection Error';
+    });
+
+    // Handle disconnection
+    client.on('close', () => {
+      console.log('Disconnected from broker');
+      statusEl.textContent = 'Disconnected';
+    });
+  </script>
+</body>
+</html>
