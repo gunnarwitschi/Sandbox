@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Save MQTT Messages</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+</head>
+<body>
+  <h1>MQTT Message Logger</h1>
+  <button id="download">Download Messages</button>
+  <p>Status: <span id="status">Disconnected</span></p>
+  <p>Received Messages:</p>
+  <ul id="messages"></ul>
+
+  <script>
+    // MQTT Broker details
+    const broker = 'wss://e23fa99e4f934d279e11c7bc9520578e.s1.eu.hivemq.cloud:8884/mqtt'; // Public HiveMQ broker
+    const topic = 'solar/116484675526/1/power'; // Replace with your topic
+	const topics = ['solar/116484675526/1/power', 'solar/116484675526/2/power', 'solar/116484675526/3/power', 'solar/116484675526/4/power'];
+    const username = 'openDTU'; // Replace with your username
+    const password = 'openDTU42'; // Replace with your password
+
+    const client = mqtt.connect(broker, {username: username,password: password,});
+    const statusEl = document.getElementById('status');
+    const messagesEl = document.getElementById('messages');
+    const downloadBtn = document.getElementById('download');
+    let messageLog = [];
+	
+	// Convert timestamp to a readable format
+    function getFormattedTimestamp() {
+      const now = new Date();
+      return now.toISOString(); // ISO 8601 format: 2024-11-15T12:34:56.789Z
+    }
+
+
+    client.on('connect', () => {
+      console.log('Connected to MQTT broker');
+      statusEl.textContent = 'Connected';
+      client.subscribe(topics, (err) => {
+        if (!err) {
+          console.log(`Subscribed to topic: ${topics}`);
+        } else {
+          console.error('Subscription error:', err);
+        }
+      });
+    });
+
+    client.on('message', (topic, message) => {
+      const timestamp = getFormattedTimestamp();
+	  const msg = `${timestamp},${topic},${message.toString()}`;
+      console.log(msg);
+
+      // Add to message log
+      messageLog.push(msg);
+
+      // Display in browser
+      const li = document.createElement('li');
+      li.textContent = msg;
+      messagesEl.appendChild(li);
+    });
+
+    // Create and download the file
+    downloadBtn.addEventListener('click', () => {
+      const blob = new Blob([messageLog.join('\n')], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'mqtt-messages.txt';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    client.on('error', (err) => {
+      console.error('Connection error:', err);
+      statusEl.textContent = 'Connection Error';
+    });
+
+    client.on('close', () => {
+      console.log('Disconnected from broker');
+      statusEl.textContent = 'Disconnected';
+    });
+  </script>
+</body>
+</html>
