@@ -14,28 +14,6 @@
       border: 1px solid #ccc;
       padding: 10px;
     }
-  </style>
-</head>
-<body>
-  <h1>Solaranlage Sava</h1>
- <table>
-    <tr>
-      <td>Zeitstempel</td>
-      <td><div id="timestamp"></div></td>
-    </tr>
-    <tr>
-      <td>Total Gesamt</td>
-      <td><span id="topic1"></span> kwh</td>
-    </tr>
-    <tr>
-      <td>Total Tag</td>
-      <td><span id="topic2"></span> Wh</td>
-    </tr>
-	  <td>Aktuell</td>
-      <td><span id="topic3"></span> W</td>
-    </tr>
-  </table>
-<style>
     table {
       border-collapse: collapse;
       margin: 20px 0;
@@ -49,8 +27,25 @@
       text-align: right; /* Right-align only the second column */
     }
   </style>
+</head>
+<body>
+  <h1>Solaranlage Sava</h1>
+ <table>
+    <tr>
+      <td>Total Gesamt</td>
+      <td><span id="yieldtotal"></span> kwh</td>
+    </tr>
+    <tr>
+      <td>Total Tag</td>
+      <td><span id="yieldday"></span> Wh</td>
+    </tr>
+      <td>Aktuell</td>
+      <td><span id="power"></span> W</td>
+    </tr>
+  </table>
   <p>Status: <span id="status">Disconnected</span></p>
-  <p>Received Messages: <span id="receivedMsgs">0</div></p>
+  <p>Received Messages: <span id="receivedMsgs">0</span></p>
+  <p>letzte Aktualisierung: <span id="timestamp">---</span></p>
  
   <script>
     let receivedMsgs = 0;
@@ -69,10 +64,9 @@
 	
 	// Map of topic to HTML element IDs
     const topicMap = {
-      'timestamp': 'timestamp',
-      'solar/ac/yieldtotal': 'topic1',
-      'solar/116484675526/0/yieldday': 'topic2',
-      'solar/116484675526/0/power': 'topic3',
+      'solar/ac/yieldtotal': 'yieldtotal',
+      'solar/116484675526/0/yieldday': 'yieldday',
+      'solar/116484675526/0/power': 'power',
     };
 
     // Connect to the broker
@@ -100,10 +94,10 @@
 	  receivedMsgs = receivedMsgs + 1;
 	  receivedMsgsEl.textContent = receivedMsgs.toString();
 	  
-	  // Timestamp: ${timestamp} 
-	  const timestamp = new Date().toLocaleString();
+      // Timestamp: ${timestamp} 
+      const timestamp = new Date().toLocaleString();
       const targetEl = document.getElementById('timestamp');
-	  targetEl.textContent = timestamp;
+      targetEl.textContent = timestamp;
 	  
       // Find the corresponding HTML element
       const targetId = topicMap[topic];
